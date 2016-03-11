@@ -357,7 +357,7 @@ int main(int argc, char** argv){
 		// Iteration sur le nombre de problemes a lancer (otpion -s)
 		for (j = 0; j < nbProblems; j++) {
 			n = s[j] + 4;
-			size = pow(2, n) + 2;
+			size = (1 << n) + 2;
 			// Allocation memoire des matrices a utiliser
 			
 			if( (mat1 = (float**) malloc(sizeof(float*) * size)) == NULL){
@@ -429,9 +429,10 @@ int main(int argc, char** argv){
 						for(indexThread=0;indexThread<nbDifferentThreads;indexThread++){
 							printf("AVANT\n");
 							printMatrix(*mat1,size);
-							tab = decoupageMatrice(pow(4,t[indexThread]),size);
+							int numberOfThreads = (1 << (2*t[indexThread]));//pow(4,t[indexThread]);
+							tab = decoupageMatrice(numberOfThreads,size-2);
 							for (iteration = 0; iteration < i; iteration++) {
-								nextStepBarrier(*mat1, *mat2, size, pow(4,t[indexThread]));
+								nextStepBarrier(*mat1, *mat2, size, numberOfThreads);
 							}
 							printf("APRES\n");
 							printMatrix(*mat1,size);
