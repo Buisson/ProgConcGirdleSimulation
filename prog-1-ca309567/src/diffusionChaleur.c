@@ -227,7 +227,7 @@ int main(int argc, char** argv){
 	int opt;	
 	int* s;//listes des tailles
 	int* e;//liste des etapes
-	int* t;//liste des nombres de threads
+	int* t = NULL;//liste des nombres de threads
 	
 	// Declaration des options
 	int i = 0;
@@ -403,82 +403,83 @@ int main(int argc, char** argv){
 					exit(EXIT_FAILURE);
 				}
 			}
+			int indexThread;
+			int endAllThreads=nbDifferentThreads;
+			if(t==NULL || e[l]==0){endAllThreads=1;}//pour passer une fois dans la boucle for.
+			for(indexThread=0;indexThread<endAllThreads;indexThread++){
+				int numberOfThreads = (1 << (2*t[indexThread]));//pow(4,t[indexThread]);
+				for (k = 0; k < counter; k++) {
+					if (m) {
+						start_t = clock();
+					}
+					if (M) {
+						debutTemp = time(NULL);
+					}
+					switch(e[l]){
+						case 0:
+							printf("Execution de l'etape 0 ...[size matrix : %d]\n",size-2);
+							//printf("AVANT\n");
+							//printMatrix(*mat1,size);
+							for (iteration = 0; iteration < i; iteration++) {
+								nextStep(*mat1, *mat2, size);
+							}
+							//printf("APRES\n");
+							//printMatrix(*mat1,size);
+						break;
 
-			for (k = 0; k < counter; k++) {
-				if (m) {
-					start_t = clock();
-				}
-				if (M) {
-					debutTemp = time(NULL);
-				}
-				int indexThread;
-				switch(e[l]){
-					case 0:
-						printf("Execution de l'etape 0 ...\n");
-						//printf("AVANT\n");
-						//printMatrix(*mat1,size);
-						for (iteration = 0; iteration < i; iteration++) {
-							nextStep(*mat1, *mat2, size);
-						}
-						//printf("APRES\n");
-						//printMatrix(*mat1,size);
-					break;
+						case 1:
+							printf("Execution de l'etape 1 ...[size matrix : %d, nb Threads : %d]\n",size-2,numberOfThreads);
 
-					case 1:
-						printf("Execution de l'etape 1 ...\n");
-						for(indexThread=0;indexThread<nbDifferentThreads;indexThread++){
-							printf("AVANT\n");
-							printMatrix(*mat1,size);
-							int numberOfThreads = (1 << (2*t[indexThread]));//pow(4,t[indexThread]);
+							//printf("AVANT\n");
+							//printMatrix(*mat1,size);
 							tab = decoupageMatrice(numberOfThreads,size-2);
 							for (iteration = 0; iteration < i; iteration++) {
 								nextStepBarrier(*mat1, *mat2, size, numberOfThreads);
 							}
-							printf("APRES\n");
-							printMatrix(*mat1,size);
-						}
-					break;
+							//printf("APRES\n");
+							//printMatrix(*mat1,size);
+						break;
 
-					case 2:
-						printf("Execution de l'etape 2 ...\n");
-					break;
+						case 2:
+							printf("Execution de l'etape 2 ...\n");
+						break;
 
-					case 3:
-						printf("Execution de l'etape 3 ...\n");
-					break;
+						case 3:
+							printf("Execution de l'etape 3 ...\n");
+						break;
 
-					case 4:
-						printf("Execution de l'etape 4 ...\n");
-					break;
-					case 5:
-						printf("Execution de l'etape 5 ...\n");
-					break;					
+						case 4:
+							printf("Execution de l'etape 4 ...\n");
+						break;
+						case 5:
+							printf("Execution de l'etape 5 ...\n");
+						break;					
 
-					default:
-						//ne rien faire
-						printf("Veuillez entrer une valeur correcte pour l'option -e\n");
-					break;
+						default:
+							//ne rien faire
+							printf("Veuillez entrer une valeur correcte pour l'option -e\n");
+						break;
+					}
+					if (m) {
+						end_t = clock();
+						clocks[k] = (float)(end_t - start_t) / CLOCKS_PER_SEC;
+					}
+					if (M) {
+						finTemp = time(NULL);
+						times[k] = (float)(finTemp - debutTemp);				
+					}
 				}
+				if (a) {
+					printf("PRINT QUARTER\n");
+					printQuarterMatrix(*mat1, size);
+				}
+
 				if (m) {
-					end_t = clock();
-					clocks[k] = (float)(end_t - start_t) / CLOCKS_PER_SEC;
+					printf("Average clock for s = %d : %f\n", s[j], getAverageClockWithoutExtremes(clocks, counter));
 				}
 				if (M) {
-					finTemp = time(NULL);
-					times[k] = (float)(finTemp - debutTemp);				
+					printf("Average time for s = %d : %f\n", s[j], getAverageClockWithoutExtremes(times, counter));
 				}
-			}
-
-			if (a) {
-				printf("PRINT QUARTER\n");
-				printQuarterMatrix(*mat1, size);
-			}
-
-			if (m) {
-				printf("Average clock for s = %d : %f\n", s[j], getAverageClockWithoutExtremes(clocks, counter));
-			}
-			if (M) {
-				printf("Average time for s = %d : %f\n", s[j], getAverageClockWithoutExtremes(times, counter));
 			}
 		}
 	}

@@ -92,7 +92,6 @@ InfoThread* decoupageMatrice(int nbThread, int sizeMatrice){
 
 
 	int pas = nbCelluleParSectionLigCol;
-	printf("PAS : %d\n",pas);
 	int indiceTab = 0;
 	int i;
 	int y;
@@ -102,7 +101,7 @@ InfoThread* decoupageMatrice(int nbThread, int sizeMatrice){
 			tab[indiceTab].iMax = i + pas - 1;
 			tab[indiceTab].jMin = y;
 			tab[indiceTab].jMax = y + pas - 1;
-			printf("xmin : %d, xmax : %d, ymin : %d , ymax : %d\n",tab[indiceTab].iMin,tab[indiceTab].iMax,tab[indiceTab].jMin,tab[indiceTab].jMax);
+			//printf("xmin : %d, xmax : %d, ymin : %d , ymax : %d\n",tab[indiceTab].iMin,tab[indiceTab].iMax,tab[indiceTab].jMin,tab[indiceTab].jMax);
 			indiceTab++;
 		}
 	}
