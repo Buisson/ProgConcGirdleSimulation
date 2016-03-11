@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "matrixUtils.h"
 
@@ -83,7 +84,11 @@ InfoThread* decoupageMatrice(int nbThread, int sizeMatrice){
 	int nbSection = nbSectionLigCol*nbSectionLigCol;
 
 	// On creer un tableau qui contient les info de chaque thread creer
-	InfoThread* tab = malloc(sizeof(InfoThread)*nbSection);
+	InfoThread* tab;
+	if ((tab = malloc(sizeof(InfoThread)*nbSection)) == NULL){
+		fprintf(stderr,"Allocation impossible \n");
+		exit(EXIT_FAILURE);
+	}
 
 
 	int pas = nbCelluleParSectionLigCol;

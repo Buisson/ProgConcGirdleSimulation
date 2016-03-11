@@ -7,4 +7,4 @@
 #	Date de modification	:	21 février 2016
 #
 make
-bin/diffusionChaleur -i 10000 -e 0 -s 024 -m -M
+bin/diffusionChaleur -i 10000 -e 1 -s 0 -t 1

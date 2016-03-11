@@ -153,12 +153,20 @@ void* calculSubMatrixVertical(void * arguments){
 void nextStepBarrier(float* mat1, float* mat2, int size, int nbThreads){
 	int indThread;
 	pthread_t *thread_id;
-	thread_id = malloc(sizeof(pthread_t)*(nbThreads+1));
+	if ( (thread_id = malloc(sizeof(pthread_t)*(nbThreads+1))) == NULL ){
+		fprintf(stderr,"Allocation impossible \n");
+		exit(EXIT_FAILURE);
+ 	}
 	if(pthread_barrier_init(&barrierHorizontal, NULL, nbThreads+1)!=0){
 		printf("Barrier fail to init\n");
 	}
+
 	for(indThread=0;indThread<nbThreads;indThread++){
-		argument_barriere* args = malloc(sizeof(argument_barriere));
+		argument_barriere* args;
+		if( (args = malloc(sizeof(argument_barriere))) == NULL){
+			fprintf(stderr,"Allocation impossible \n");
+			exit(EXIT_FAILURE);
+		}
 		args->mat1=mat1;
 		args->mat2=mat2;
 		args->size=size;
@@ -183,7 +191,11 @@ void nextStepBarrier(float* mat1, float* mat2, int size, int nbThreads){
 	}
 
 	for(indThread=0;indThread<nbThreads;indThread++){
-		argument_barriere* args = malloc(sizeof(argument_barriere));
+		argument_barriere* args;
+		if( (args = malloc(sizeof(argument_barriere))) == NULL){
+			fprintf(stderr,"Allocation impossible \n");
+			exit(EXIT_FAILURE);
+		}
 		args->mat1=mat1;
 		args->mat2=mat2;
 		args->size=size;
@@ -236,7 +248,10 @@ int main(int argc, char** argv){
 				} 
 				// Recuperer le nombre de problemes a traiter et leur taille, puis initialiser le tableau
 				nbProblems = strlen(optarg);
-				s = malloc(sizeof(int) * nbProblems);
+				if( (s = malloc(sizeof(int) * nbProblems)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 				int j = 0;
 				for(j = 0; j < nbProblems; j++) {
 					s[j] = optarg[j] - '0';
@@ -297,7 +312,12 @@ int main(int argc, char** argv){
 				} 
 				// Recupere les etapes du programme a executer
 				nbEtapes = strlen(optarg);
-				e = malloc(sizeof(int) * nbEtapes);
+				
+				if( (e = malloc(sizeof(int) * nbEtapes)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
+
 				int k = 0;
 				for(k = 0; k < nbEtapes; k++) {
 					e[k] = optarg[k] - '0';
@@ -309,7 +329,10 @@ int main(int argc, char** argv){
 				// 4**t thread a creer, t varie entre 0 (iteratif) et 5 (1024 threads)
 				// concerne bien evidemment les etapes 1 a 5, sans effet sur etape 0
 				nbDifferentThreads = strlen(optarg);
-				t = malloc(sizeof(int) * nbDifferentThreads);
+				if( (t = malloc(sizeof(int) * nbDifferentThreads)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 				int l;
 				for(l=0;l<nbDifferentThreads;l++){
 					t[l] = optarg[l] - '0';
@@ -334,16 +357,26 @@ int main(int argc, char** argv){
 		// Iteration sur le nombre de problemes a lancer (otpion -s)
 		for (j = 0; j < nbProblems; j++) {
 			n = s[j] + 4;
-			//size = pow(2, n) + 2; ??
 			size = pow(2, n) + 2;
 			// Allocation memoire des matrices a utiliser
-			mat1 = (float**) malloc(sizeof(float*) * size);
+			
+			if( (mat1 = (float**) malloc(sizeof(float*) * size)) == NULL){
+				fprintf(stderr,"Allocation impossible \n");
+				exit(EXIT_FAILURE);
+			}
+			
 			for (k = 0; k < size; k++) {
-				mat1[k] = (float*) malloc(sizeof(float) * size);
+				if( (mat1[k] = (float*) malloc(sizeof(float) * size)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 			}
 			mat2 = (float**) malloc(sizeof(float*) * size);
 			for (k = 0; k < size; k++) {
-				mat2[k] = (float*) malloc(sizeof(float) * size);
+				if( (mat2[k] = (float*) malloc(sizeof(float) * size)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 			}
 
 			// Initialisation des matrices
@@ -358,11 +391,17 @@ int main(int argc, char** argv){
 			// Si l'option m ou M a ete entree, le compteur est mis a 10 pour calculer la moyenne de temps
 			if (m) {
 				counter = 10;
-				clocks = malloc(sizeof(float) * counter);
+				if( (clocks = malloc(sizeof(float) * counter)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 			}
 			if (M) {
 				counter = 10;
-				times = malloc(sizeof(float) * counter);
+				if( (times = malloc(sizeof(float) * counter)) == NULL){
+					fprintf(stderr,"Allocation impossible \n");
+					exit(EXIT_FAILURE);
+				}
 			}
 
 			for (k = 0; k < counter; k++) {
@@ -388,14 +427,14 @@ int main(int argc, char** argv){
 					case 1:
 						printf("Execution de l'etape 1 ...\n");
 						for(indexThread=0;indexThread<nbDifferentThreads;indexThread++){
-							//printf("AVANT\n");
-							//printMatrix(*mat1,size);
+							printf("AVANT\n");
+							printMatrix(*mat1,size);
 							tab = decoupageMatrice(pow(4,t[indexThread]),size);
 							for (iteration = 0; iteration < i; iteration++) {
 								nextStepBarrier(*mat1, *mat2, size, pow(4,t[indexThread]));
 							}
-							//printf("APRES\n");
-							//printMatrix(*mat1,size);
+							printf("APRES\n");
+							printMatrix(*mat1,size);
 						}
 					break;
 
