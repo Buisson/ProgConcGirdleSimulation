@@ -359,7 +359,6 @@ int main(int argc, char** argv){
 			n = s[j] + 4;
 			size = (1 << n) + 2;
 			// Allocation memoire des matrices a utiliser
-			
 			if( (mat1 = (float**) malloc(sizeof(float*) * size)) == NULL){
 				fprintf(stderr,"Allocation impossible \n");
 				exit(EXIT_FAILURE);
@@ -371,7 +370,11 @@ int main(int argc, char** argv){
 					exit(EXIT_FAILURE);
 				}
 			}
-			mat2 = (float**) malloc(sizeof(float*) * size);
+			
+			if( (mat2 = (float**) malloc(sizeof(float*) * size)) == NULL){
+				fprintf(stderr,"Allocation impossible \n");
+				exit(EXIT_FAILURE);
+			}
 			for (k = 0; k < size; k++) {
 				if( (mat2[k] = (float*) malloc(sizeof(float) * size)) == NULL){
 					fprintf(stderr,"Allocation impossible \n");
@@ -381,9 +384,9 @@ int main(int argc, char** argv){
 
 			// Initialisation des matrices
 			defineConstants(size, n);
+			int temporaire;
 			initializeMatrix(*mat1, size);
 			initializeMatrix(*mat2, size);
-
 			int counter = 1;
 			float* times;
 			float* clocks;
@@ -404,10 +407,15 @@ int main(int argc, char** argv){
 				}
 			}
 			int indexThread;
+			int numberOfThreads=0;
 			int endAllThreads=nbDifferentThreads;
-			if(t==NULL || e[l]==0){endAllThreads=1;}//pour passer une fois dans la boucle for.
+			int ThreadOk = 1;
+			if(t==NULL || e[l]==0){endAllThreads=1;ThreadOk=0;}//pour passer une fois dans la boucle for.
 			for(indexThread=0;indexThread<endAllThreads;indexThread++){
-				int numberOfThreads = (1 << (2*t[indexThread]));//pow(4,t[indexThread]);
+				if(ThreadOk){
+					numberOfThreads = (1 << (2*t[indexThread]));//pow(4,t[indexThread]);
+				}
+
 				for (k = 0; k < counter; k++) {
 					if (m) {
 						start_t = clock();
@@ -432,6 +440,7 @@ int main(int argc, char** argv){
 
 							//printf("AVANT\n");
 							//printMatrix(*mat1,size);
+							//printf("AVANT SEGFAULT?\n");
 							tab = decoupageMatrice(numberOfThreads,size-2);
 							for (iteration = 0; iteration < i; iteration++) {
 								nextStepBarrier(*mat1, *mat2, size, numberOfThreads);

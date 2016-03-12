@@ -42,6 +42,7 @@ void initializeMatrix(float* mat, int size){
 	int i, j;
 	for(i = 0; i < size; i++) {
 		for(j = 0; j < size; j++) {
+			//printf("mat[0][0] : %f\n",mat[0]);
 			if((i >= centreInf) && (i < centreSup) && (j >= centreInf) && (j < centreSup)) {
 				mat[i + j * size] = TEMP_CHAUD;
 			} else {
