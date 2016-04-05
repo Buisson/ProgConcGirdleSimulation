@@ -5,7 +5,7 @@
  * Auteurs		:	Aurelien COLOMBET	(ca309567) 
  * 
  * Creation		: 	02 février 2016
- * Modification	: 	13 mars 2016
+ * Modification	: 	1 avril 2016
  * 
  */
 #include <math.h>
@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <pthread.h> //Pour les threads et barrier POSIX
 #include "matrixUtils.h"
+#include "myBarrier.h"
 
 #define TEMP_FROID 0.00
 #define TEMP_CHAUD 256.00
@@ -34,7 +35,12 @@
  pthread_barrier_t barrierVertical;//barriere POSIX pour l'etape du calcul vertical
  pthread_barrier_t barrierFillCenter;//barriere POSIX pour l'etape de la remise du centre aux valeurs TEMP_CHAUD
 
+ myBarrier myBarrierHorizontal;//barriere utilisant les mutex et var de conditions POSIX pour l'etape du calcul horizontal
+ myBarrier myBarrierVertical;//barriere utilisant les mutex et var de conditions POSIX pour l'etape du calcul vertical
+ myBarrier myBarrierFillCenter;//barriere utilisant les mutex et var de conditions POSIX pour l'etape de la remise du centre aux valeurs TEMP_CHAUD
+
 InfoThread* tab;
+int etapeEnCours;//Etape en cours... (0-5)
 
 // Calculer la moyenne d'un tableau de floats en supprimant le minimum et le maximum
 float getAverageClockWithoutExtremes(float* clocks, int size) {
@@ -117,8 +123,22 @@ void* calculSubMatrixHorizontal(void * arguments){
 			}
 		}
 	}
-	
-	pthread_barrier_wait (&barrierHorizontal);
+	switch(etapeEnCours){
+		case 1:
+			//printf("BarrierNormal...\n");
+			pthread_barrier_wait (&barrierHorizontal);
+		break;
+		case 2:
+			//printf("myBarrierMutex\n");
+			myBarrier_wait(&myBarrierHorizontal);
+		break;
+		case 3:
+			printf("myBarrierSemaphore... TODO\n");
+		break;
+		default:
+			//should never go here...
+		break;
+	}
 	pthread_exit(NULL);
 	return 0;
 }
@@ -143,7 +163,20 @@ void* calculSubMatrixVertical(void * arguments){
 			}
 		}
 	}
-	pthread_barrier_wait (&barrierVertical);
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_wait (&barrierVertical);
+		break;
+		case 2:
+			myBarrier_wait(&myBarrierVertical);
+		break;
+		case 3:
+			//TODO pour la prochaine etape...
+		break;
+		default:
+			//ne vient jamais ici normalement.
+		break;
+	}
 	pthread_exit(NULL);
 	return 0;
 }
@@ -156,8 +189,24 @@ void nextStepBarrier(float* mat1, float* mat2, int size, int nbThreads){
 		fprintf(stderr,"Allocation impossible \n");
 		exit(EXIT_FAILURE);
  	}
-	if(pthread_barrier_init(&barrierHorizontal, NULL, nbThreads+1)!=0){
-		printf("Barrier fail to init\n");
+
+ 	switch(etapeEnCours){
+		case 1:
+			if(pthread_barrier_init(&barrierHorizontal, NULL, nbThreads+1)!=0){
+				printf("Barrier fail to init\n");
+			}
+		break;
+		case 2:
+			if(myBarrier_init(&myBarrierHorizontal, nbThreads+1)!=0){
+				printf("MyBarrier fail to init\n");	
+			}
+		break;
+		case 3:
+			//TODO mybarriersemaphoreinit.
+		break;
+
+		default:
+		break;
 	}
 
 	for(indThread=0;indThread<nbThreads;indThread++){
@@ -178,13 +227,42 @@ void nextStepBarrier(float* mat1, float* mat2, int size, int nbThreads){
 			printf("[ERREUR] Creation de la thread fail\n");
 		}
 	}
-	pthread_barrier_wait (&barrierHorizontal);
+
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_wait (&barrierHorizontal);
+		break;
+		case 2:
+			myBarrier_wait(&myBarrierHorizontal);
+		break;
+		case 3:
+			//mybarriersemaphore wait TODO
+		break;
+		default:
+		break;
+	}
+
 	for(indThread=0;indThread<nbThreads;indThread++)
 		pthread_join(thread_id[indThread],NULL);//On fait un join de toutes les thread.
 
-	pthread_barrier_destroy(&barrierHorizontal);
-	if(pthread_barrier_init(&barrierVertical, NULL, nbThreads+1)!=0){
-		printf("Barrier fail to init\n");
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_destroy(&barrierHorizontal);
+			if(pthread_barrier_init(&barrierVertical, NULL, nbThreads+1)!=0){
+				printf("Barrier fail to init\n");
+			}
+		break;
+		case 2:
+			myBarrier_destroy(&myBarrierHorizontal);
+			if(myBarrier_init(&myBarrierVertical,nbThreads+1)!=0){
+				printf("MyBarrier fail to init\n");	
+			}
+		break;
+		case 3:
+			//TODO mybarriersemaphore destroy
+		break;
+		default:
+		break;
 	}
 
 	for(indThread=0;indThread<nbThreads;indThread++){
@@ -206,15 +284,57 @@ void nextStepBarrier(float* mat1, float* mat2, int size, int nbThreads){
 			fprintf(stderr, "error: pthread_create, rc: %d\n", errorPthread);
 		}
 	}
-	pthread_barrier_wait (&barrierVertical);
+
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_wait (&barrierVertical);
+		break;
+		case 2:
+			myBarrier_wait(&myBarrierVertical);
+		break;
+		case 3:
+			//TODO barrier wait....semaphore
+		break;
+		default:
+		break;
+	}
+
 	for(indThread=0;indThread<nbThreads;indThread++)
 		pthread_join(thread_id[indThread],NULL);//On fait un join de toutes les thread.
-	pthread_barrier_destroy(&barrierVertical);
+	
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_destroy(&barrierVertical);
+			pthread_barrier_init(&barrierFillCenter, NULL, 1);
+		break;
+		case 2:
+			myBarrier_destroy(&myBarrierVertical);
+			myBarrier_init(&myBarrierFillCenter,1);
+		break;
+		case 3:
+			//TODO  destroy barrier semaphore.
+		break;
+		default:
+		break;
+	}
 
-	pthread_barrier_init(&barrierFillCenter, NULL, 1);
 	fillCenter(mat1, size);
-	pthread_barrier_wait(&barrierFillCenter);
-	pthread_barrier_destroy(&barrierFillCenter);
+
+	switch(etapeEnCours){
+		case 1:
+			pthread_barrier_wait(&barrierFillCenter);
+			pthread_barrier_destroy(&barrierFillCenter);
+		break;
+		case 2:
+			myBarrier_wait(&myBarrierFillCenter);
+			myBarrier_destroy(&myBarrierFillCenter);
+		break;
+		case 3:
+			//todo semaphore.
+		break;
+		default:
+		break;
+	}
 }
 
 int main(int argc, char** argv){
@@ -348,6 +468,7 @@ int main(int argc, char** argv){
 
 	//iteration sur le nombre d'etapes a executer (option -e)
 	for(l = 0 ; l<nbEtapes ; l++){
+		etapeEnCours=e[l];//sauvegarde de l'etape en cours.
 		// Iteration sur le nombre de problemes a lancer (option -s)
 		for (j = 0; j < nbProblems; j++) {
 			int indexThread;
@@ -448,7 +569,19 @@ int main(int argc, char** argv){
 						break;
 
 						case 2:
-							//printf("Execution de l'etape 2 ...\n");
+							//printf("Execution de l'etape 2 ...[size matrix : %d, nb Threads : %d]\n",size-2,numberOfThreads);
+							if(a){
+								printf("AVANT\n");
+								printMatrix(*mat1,size);
+							}
+							tab = decoupageMatrice(numberOfThreads,size-2);
+							for (iteration = 0; iteration < i; iteration++) {
+								nextStepBarrier(*mat1, *mat2, size, numberOfThreads);
+							}
+							if(a){
+								printf("APRES\n");
+								printMatrix(*mat1,size);
+							}
 						break;
 
 						case 3:

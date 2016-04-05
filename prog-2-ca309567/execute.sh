@@ -3,9 +3,13 @@
 #	
 #	Auteurs					:	Aurelien COLOMBET	(ca309567)
 #	
-#	Date de modification	:	13 mars 2016
+#	Date de modification	:	4 Avril 2016
 #
-for i in 0 2 4 #Temporaire car segfault declenche si je passe plusieurs taille à mon programme.(pas le temps de trouver l'erreur).
+
+for j in 0 1 2
 do
-	bin/diffusionChaleur -i 10000 -e 01 -s $i -t 13 -m
+	for i in 0 2 4 #Temporaire car segfault declenche si je passe plusieurs taille à mon programme.(pas le temps de trouver l'erreur).
+	do
+			bin/diffusionChaleur -i 10000 -e $j -s $i -t 13 -m
+	done
 done
